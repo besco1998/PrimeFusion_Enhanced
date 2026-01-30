@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package fanet;
+
+message GPSBeacon {
+    uint64 timestamp = 1;
+    uint32 block_number = 2;
+    bytes hash = 3;
+    uint64 time_usec = 4;
+    uint32 fix_type = 5;
+    int32 lat = 6;
+    int32 lon = 7;
+    int32 alt = 8;
+    int32 eph = 9;
+    int32 epv = 10;
+    int32 vel = 11;
+    int32 cog = 12;
+    int32 satellites_visible = 13;
+    int32 alt_ellipsoid = 14;
+    uint32 h_acc = 15;
+    uint32 v_acc = 16;
+    uint32 vel_acc = 17;
+    uint32 hdg_acc = 18;
+}
