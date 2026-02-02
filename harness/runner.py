@@ -72,7 +72,14 @@ def parse_metrics(output_bytes):
 # ==============================================================================
 # Main Logic
 # ==============================================================================
-def run_benchmark_set(plugin_name, variant, run_dir):
+import argparse
+
+# ... (Configuration section remains the same) ...
+
+# ==============================================================================
+# Main Logic
+# ==============================================================================
+def run_benchmark_set(plugin_name, variant, run_dir, cpu_pin):
     found_plugins = glob.glob(os.path.join(BUILD_DIR, "**", plugin_name), recursive=True)
     if not found_plugins:
         print(f"⚠️  Plugin {plugin_name} not found. Skipping.")
@@ -82,8 +89,8 @@ def run_benchmark_set(plugin_name, variant, run_dir):
     
     # 1. Run Time Benchmark
     print(f"   ⏳ [Time]   {plugin_name} [{variant}] ...", end="", flush=True)
-    # Using taskset -c 0 to pin to single core
-    cmd_time = ["taskset", "-c", "0", os.path.join(BIN_DIR, "pf_runner_time"), plugin_path, variant, str(ITERATIONS), run_dir]
+    # Using taskset -c <cpu_pin> to pin to core
+    cmd_time = ["taskset", "-c", str(cpu_pin), os.path.join(BIN_DIR, "pf_runner_time"), plugin_path, variant, str(ITERATIONS), run_dir]
     try:
         out_time = subprocess.check_output(cmd_time, stderr=subprocess.STDOUT)
         time_metrics = parse_metrics(out_time)
@@ -94,7 +101,7 @@ def run_benchmark_set(plugin_name, variant, run_dir):
 
     # 2. Run Memory Benchmark
     print(f"   🧠 [Memory] {plugin_name} [{variant}] ...", end="", flush=True)
-    cmd_mem = ["taskset", "-c", "0", os.path.join(BIN_DIR, "pf_runner_memory"), plugin_path, variant, str(ITERATIONS)]
+    cmd_mem = ["taskset", "-c", str(cpu_pin), os.path.join(BIN_DIR, "pf_runner_memory"), plugin_path, variant, str(ITERATIONS)]
     try:
         out_mem = subprocess.check_output(cmd_mem, stderr=subprocess.STDOUT)
         mem_metrics = parse_metrics(out_mem)
@@ -133,10 +140,16 @@ def run_benchmark_set(plugin_name, variant, run_dir):
     return True
 
 def main():
+    parser = argparse.ArgumentParser(description="PrimeFusion Enhanced Benchmark Runner")
+    parser.add_argument("--cpu-pin", type=str, default="0", help="CPU core(s) to pin the benchmark process to (default: 0)")
+    args = parser.parse_args()
+
     print("=================================================================")
     print("     PrimeFusion Enhanced - Dual-Runner Harness")
+    print(f"     CPU Pinning: Core {args.cpu_pin}")
     print("=================================================================")
     
+    global ITERATIONS
     ITERATIONS = int(os.environ.get("BENCHMARK_ITERATIONS", "100000")) # Lower default for dev
     run_dir = os.path.join(RESULTS_DIR, datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S"))
     os.makedirs(run_dir, exist_ok=True)
@@ -145,6 +158,7 @@ def main():
     
     # Write Metadata
     meta = get_env_info()
+    meta["cpu_pin"] = args.cpu_pin
     with open(os.path.join(run_dir, "metadata.txt"), "w") as f:
         for k, v in meta.items():
             f.write(f"{k}: {v}\n")
@@ -155,7 +169,7 @@ def main():
     
     for lib, variants in MATRIX.items():
         for variant in variants:
-            if run_benchmark_set(lib, variant, run_dir):
+            if run_benchmark_set(lib, variant, run_dir, args.cpu_pin):
                 success += 1
             total += 1
             
