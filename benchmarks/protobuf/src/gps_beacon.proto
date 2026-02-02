@@ -22,3 +22,70 @@ message GPSBeacon {
     uint32 vel_acc = 17;
     uint32 hdg_acc = 18;
 }
+
+// 2. GlobalPosition (Fused)
+message GlobalPosition {
+    uint32 time_boot_ms = 1;
+    int32 lat = 2;
+    int32 lon = 3;
+    int32 alt = 4;
+    int32 relative_alt = 5;
+    int32 vx = 6;
+    int32 vy = 7;
+    int32 vz = 8;
+    uint32 hdg = 9;
+}
+
+// 3. Odometry (Matrix/Covariance)
+message Odometry {
+    uint64 time_usec = 1;
+    uint32 frame_id = 2;
+    uint32 child_frame_id = 3;
+    float x = 4;
+    float y = 5;
+    float z = 6;
+    repeated float q = 7; // Size 4
+    float vx = 8;
+    float vy = 9;
+    float vz = 10;
+    float rollspeed = 11;
+    float pitchspeed = 12;
+    float yawspeed = 13;
+    repeated float pose_covariance = 14; // Size 21
+    repeated float velocity_covariance = 15; // Size 21
+}
+
+// 4. Attitude (Pure Float)
+message Attitude {
+    uint32 time_boot_ms = 1;
+    float roll = 2;
+    float pitch = 3;
+    float yaw = 4;
+    float rollspeed = 5;
+    float pitchspeed = 6;
+    float yawspeed = 7;
+}
+
+// 5. Battery (Array)
+message Battery {
+    uint32 id = 1;
+    uint32 battery_function = 2;
+    uint32 type = 3;
+    int32 temperature = 4;
+    repeated uint32 voltages = 5; // Size 10 (uint16 mapped to uint32 in proto usually, or uint32 for simplicity)
+    int32 current_battery = 6;
+    int32 current_consumed = 7;
+    int32 energy_consumed = 8;
+    int32 battery_remaining = 9;
+}
+
+// 6. Status (String)
+message Status {
+    uint32 severity = 1;
+    string text = 2; // String
+}
+
+// 7. GPS Block (Vector)
+message GPSBlock {
+    repeated GPSBeacon messages = 1;
+}

@@ -83,18 +83,18 @@ int main(int argc, char** argv) {
     // 1. Cold Start Measurement (First Call)
     size_t cold_start_heap = get_allocated_mem();
     {
-        auto b = bench->encode(payload);
+        auto b = bench->encode(&payload);
         pf::Payload d;
-        bench->decode(b, d);
+        bench->decode(b, &d);
     }
     size_t cold_end_heap = get_allocated_mem();
     long cold_delta = (long)cold_end_heap - (long)cold_start_heap; // Can be negative in weird libc caching cases, effectively 0
 
     // 2. Warmup (Stabilize Pools)
     for(int i=0; i<100; i++) {
-        auto b = bench->encode(payload);
+        auto b = bench->encode(&payload);
         pf::Payload d;
-        bench->decode(b, d);
+        bench->decode(b, &d);
     }
 
     // 3. Warm Measurement (N Iterations)
@@ -102,9 +102,9 @@ int main(int argc, char** argv) {
     
     std::vector<uint8_t> buffer;
     for(size_t i=0; i<iterations; i++) {
-        buffer = bench->encode(payload);
+        buffer = bench->encode(&payload);
         pf::Payload d;
-        bench->decode(buffer, d);
+        bench->decode(buffer, &d);
     }
     
     size_t warm_end_heap = get_allocated_mem();

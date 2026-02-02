@@ -31,12 +31,12 @@ public:
         p.block_number = 999;
         // ... set a few sanity fields
         
-        auto buf = encode(p);
+        auto buf = encode(&p);
         Payload d;
         // Zero out d to be sure
         memset(&d, 0, sizeof(Payload));
         
-        decode(buf, d);
+        decode(buf, &d);
         
         if (d.timestamp == 123456789 && d.block_number == 999) {
              std::cout << "[CBOR] Sanity Check: PASS (Decode is working accurately)" << std::endl;
@@ -48,7 +48,8 @@ public:
         }
     }
 
-    std::vector<uint8_t> encode(const Payload& m) override {
+    std::vector<uint8_t> encode(const void* data) override {
+        const Payload& m = *static_cast<const Payload*>(data);
         // High-Performance Streaming Implementation (Stack-based, No Malloc)
         unsigned char buffer[2048]; // Sufficient for 18 fields
         unsigned char* ptr = buffer;
@@ -254,7 +255,8 @@ public:
     static void on_uint32(void* ctx, uint32_t val) { handle_int_value((DecodeContext*)ctx, val); }
     static void on_uint64(void* ctx, uint64_t val) { handle_int_value((DecodeContext*)ctx, val); }
 
-    void decode(const std::vector<uint8_t>& buffer, Payload& m) override {
+    void decode(const std::vector<uint8_t>& buffer, void* out_data) override {
+        Payload& m = *static_cast<Payload*>(out_data);
         struct cbor_callbacks callbacks = cbor_empty_callbacks;
         callbacks.uint8 = on_uint8;
         callbacks.uint16 = on_uint16;

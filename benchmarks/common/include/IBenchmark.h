@@ -3,9 +3,9 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <memory>
 #include <chrono>
+#include "mavlink_types.h" // Include the new types
 
 namespace pf {
 
@@ -18,32 +18,13 @@ struct BenchmarkConfig {
     std::string variant_name;
 };
 
-/**
- * @brief Generic Payload Data Structure (Mirror of GPSBeacon)
- */
-struct Payload {
-    uint64_t timestamp;
-    uint32_t block_number;
-    uint8_t hash[32];
-    uint64_t time_usec;
-    uint8_t fix_type;
-    int32_t lat;
-    int32_t lon;
-    int32_t alt;
-    uint16_t eph;
-    uint16_t epv;
-    uint16_t vel;
-    uint16_t cog;
-    uint8_t satellites_visible;
-    int32_t alt_ellipsoid;
-    uint32_t h_acc;
-    uint32_t v_acc;
-    uint32_t vel_acc;
-    uint32_t hdg_acc;
-};
+// Legacy Payload struct removed (Now in mavlink_types.h as PayloadGPSRaw)
+// We typedef it here for strict backward compatibility during transition if needed,
+// but we will use void* in the interface.
+using Payload = PayloadGPSRaw; 
 
 /**
- * @brief Immutable Benchmark Interface
+ * @brief Immutable Benchmark Interface (Type-Erased)
  * All formats must implement this.
  */
 class IBenchmark {
@@ -58,17 +39,17 @@ public:
 
     /**
      * @brief Encode a payload into a binary/text buffer.
-     * @param data The canonical input struct
+     * @param data Pointer to the struct (casted to void*)
      * @return std::vector<uint8_t> The serialized output
      */
-    virtual std::vector<uint8_t> encode(const Payload& data) = 0;
+    virtual std::vector<uint8_t> encode(const void* data) = 0;
 
     /**
      * @brief Decode a buffer back into a struct.
      * @param buffer The serialized data
-     * @param out_data Reference to target struct
+     * @param out_data Pointer to target struct (casted to void*)
      */
-    virtual void decode(const std::vector<uint8_t>& buffer, Payload& out_data) = 0;
+    virtual void decode(const std::vector<uint8_t>& buffer, void* out_data) = 0;
 
     /**
      * @brief Clean up resources.

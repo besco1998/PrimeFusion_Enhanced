@@ -22,10 +22,10 @@ public:
         Payload p;
         p.timestamp = 123456789;
         p.block_number = 999;
-        auto buf = encode(p);
+        auto buf = encode(&p);
         Payload d;
         memset(&d, 0, sizeof(Payload));
-        decode(buf, d);
+        decode(buf, &d);
         
         if (d.timestamp == 123456789 && d.block_number == 999) {
              std::cout << "[MsgPack] Sanity Check: PASS" << std::endl;
@@ -35,7 +35,8 @@ public:
         }
     }
 
-    std::vector<uint8_t> encode(const Payload& m) override {
+    std::vector<uint8_t> encode(const void* data) override {
+        const Payload& m = *static_cast<const Payload*>(data);
         msgpack::sbuffer sbuf;
         msgpack::packer<msgpack::sbuffer> packer(sbuf);
 
@@ -155,7 +156,8 @@ public:
         // Actually, I'll stick to DOM for MsgPack to avoid breakage, but state that SAX is possible but complex.
     };
 
-    void decode(const std::vector<uint8_t>& buffer, Payload& m) override {
+    void decode(const std::vector<uint8_t>& buffer, void* out_data) override {
+        Payload& m = *static_cast<Payload*>(out_data);
         // Reverting to the robust DOM implementation we just verified.
         // MsgPack DOM is reasonably fast (Unpack + Iterate).
         msgpack::object_handle oh = msgpack::unpack((const char*)buffer.data(), buffer.size());
@@ -199,25 +201,30 @@ public:
                  // Integer Keys
                  if (key.type == msgpack::type::POSITIVE_INTEGER) {
                      uint64_t k = key.as<uint64_t>();
-                     switch(k) {
-                         case 0: m.timestamp = val.as<uint64_t>(); break;
-                         case 1: m.block_number = val.as<uint32_t>(); break;
-                         case 2: if(val.type == msgpack::type::BIN) memcpy(m.hash, val.via.bin.ptr, 32); break;
-                         case 3: m.time_usec = val.as<uint64_t>(); break;
-                         case 4: m.fix_type = val.as<uint8_t>(); break;
-                         case 5: m.lat = val.as<int32_t>(); break;
-                         case 6: m.lon = val.as<int32_t>(); break;
-                         case 7: m.alt = val.as<int32_t>(); break;
-                         case 8: m.eph = val.as<uint16_t>(); break;
-                         case 9: m.epv = val.as<uint16_t>(); break;
-                         case 10: m.vel = val.as<uint16_t>(); break;
-                         case 11: m.cog = val.as<uint16_t>(); break;
-                         case 12: m.satellites_visible = val.as<uint8_t>(); break;
-                         case 13: m.alt_ellipsoid = val.as<int32_t>(); break;
-                         case 14: m.h_acc = val.as<uint32_t>(); break;
-                         case 15: m.v_acc = val.as<uint32_t>(); break;
-                         case 16: m.vel_acc = val.as<uint32_t>(); break;
-                         case 17: m.hdg_acc = val.as<uint32_t>(); break;
+                     try {
+                         switch(k) {
+                             case 0: m.timestamp = val.as<uint64_t>(); break;
+                             case 1: m.block_number = (uint32_t)val.as<uint64_t>(); break;
+                             case 2: if(val.type == msgpack::type::BIN) memcpy(m.hash, val.via.bin.ptr, 32); break;
+                             case 3: m.time_usec = val.as<uint64_t>(); break;
+                             case 4: m.fix_type = (uint8_t)val.as<uint64_t>(); break;
+                             case 5: m.lat = (int32_t)val.as<int64_t>(); break;
+                             case 6: m.lon = (int32_t)val.as<int64_t>(); break;
+                             case 7: m.alt = (int32_t)val.as<int64_t>(); break;
+                             case 8: m.eph = (uint16_t)val.as<uint64_t>(); break;
+                             case 9: m.epv = (uint16_t)val.as<uint64_t>(); break;
+                             case 10: m.vel = (uint16_t)val.as<uint64_t>(); break;
+                             case 11: m.cog = (uint16_t)val.as<uint64_t>(); break;
+                             case 12: m.satellites_visible = (uint8_t)val.as<uint64_t>(); break;
+                             case 13: m.alt_ellipsoid = (int32_t)val.as<int64_t>(); break;
+                             case 14: m.h_acc = (uint32_t)val.as<uint64_t>(); break;
+                             case 15: m.v_acc = (uint32_t)val.as<uint64_t>(); break;
+                             case 16: m.vel_acc = (uint32_t)val.as<uint64_t>(); break;
+                             case 17: m.hdg_acc = (uint32_t)val.as<uint64_t>(); break;
+                         }
+                     } catch (msgpack::type_error& e) {
+                         std::cerr << "MsgPack Type Error Key=" << k << " ValType=" << val.type << std::endl;
+                         throw;
                      }
                  }
             }

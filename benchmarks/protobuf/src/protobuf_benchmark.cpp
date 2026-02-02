@@ -19,10 +19,10 @@ public:
         Payload p;
         p.timestamp = 123456789;
         p.block_number = 999;
-        auto buf = encode(p);
+        auto buf = encode(&p);
         Payload d;
         memset(&d, 0, sizeof(Payload));
-        decode(buf, d);
+        decode(buf, &d);
         
         if (d.timestamp == 123456789 && d.block_number == 999) {
              std::cout << "[Protobuf] Sanity Check: PASS" << std::endl;
@@ -32,7 +32,8 @@ public:
         }
     }
 
-    std::vector<uint8_t> encode(const Payload& m) override {
+    std::vector<uint8_t> encode(const void* data) override {
+        const Payload& m = *static_cast<const Payload*>(data);
         fanet::GPSBeacon b;
         
         b.set_timestamp(m.timestamp);
@@ -73,7 +74,8 @@ public:
         return std::vector<uint8_t>(buffer, buffer + size); // Still one copy to vector return, but avoids intermediate string
     }
 
-    void decode(const std::vector<uint8_t>& buffer, Payload& m) override {
+    void decode(const std::vector<uint8_t>& buffer, void* out_data) override {
+        Payload& m = *static_cast<Payload*>(out_data);
         fanet::GPSBeacon b;
         if (!b.ParseFromArray(buffer.data(), buffer.size())) {
             std::cerr << "[PROTO] Parse Failed!" << std::endl;

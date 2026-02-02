@@ -12,6 +12,35 @@ add_library(pf_msgpack SHARED
     src/msgpack_benchmark.cpp
 )
 
+add_library(pf_msgpack_odometry SHARED
+    src/msgpack_benchmark_odometry.cpp
+)
+target_link_libraries(pf_msgpack_odometry PRIVATE pf_common msgpack-cxx)
+target_link_libraries(pf_msgpack_odometry PRIVATE pf_common msgpack-cxx)
+target_include_directories(pf_msgpack_odometry PRIVATE include)
+
+add_library(pf_msgpack_status SHARED
+    src/msgpack_benchmark_status.cpp
+)
+target_link_libraries(pf_msgpack_status PRIVATE pf_common msgpack-cxx)
+target_include_directories(pf_msgpack_status PRIVATE include)
+
+add_library(pf_msgpack_attitude SHARED src/msgpack_benchmark_attitude.cpp)
+target_link_libraries(pf_msgpack_attitude PRIVATE pf_common msgpack-cxx)
+target_include_directories(pf_msgpack_attitude PRIVATE include)
+
+add_library(pf_msgpack_global_position SHARED src/msgpack_benchmark_global_position.cpp)
+target_link_libraries(pf_msgpack_global_position PRIVATE pf_common msgpack-cxx)
+target_include_directories(pf_msgpack_global_position PRIVATE include)
+
+add_library(pf_msgpack_gps_block SHARED src/msgpack_benchmark_gps_block.cpp)
+target_link_libraries(pf_msgpack_gps_block PRIVATE pf_common msgpack-cxx)
+target_include_directories(pf_msgpack_gps_block PRIVATE include)
+
+add_library(pf_msgpack_battery SHARED src/msgpack_benchmark_battery.cpp)
+target_link_libraries(pf_msgpack_battery PRIVATE pf_common msgpack-cxx)
+target_include_directories(pf_msgpack_battery PRIVATE include)
+
 target_link_libraries(pf_msgpack PRIVATE pf_common)
 # msgpack-cxx is a header-only library, usually target name is msgpack-cxx
 target_link_libraries(pf_msgpack PRIVATE msgpack-cxx)

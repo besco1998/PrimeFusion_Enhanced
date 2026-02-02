@@ -61,10 +61,10 @@ public:
         Payload p;
         p.timestamp = 123456789;
         p.block_number = 999;
-        auto buf = encode(p);
+        auto buf = encode(&p);
         Payload d;
         memset(&d, 0, sizeof(Payload));
-        decode(buf, d);
+        decode(buf, &d);
         
         if (d.timestamp == 123456789 && d.block_number == 999) {
              std::cout << "[JSON] Sanity Check: PASS" << std::endl;
@@ -74,7 +74,8 @@ public:
         }
     }
 
-    std::vector<uint8_t> encode(const Payload& m) override {
+    std::vector<uint8_t> encode(const void* data) override {
+        const Payload& m = *static_cast<const Payload*>(data);
         // Optimization: Pre-allocate buffer to avoid reallocations
         rapidjson::StringBuffer sb(0, 1024); 
         rapidjson::Writer<rapidjson::StringBuffer> w(sb);
@@ -202,7 +203,8 @@ public:
         }
     };
 
-    void decode(const std::vector<uint8_t>& buffer, Payload& m) override {
+    void decode(const std::vector<uint8_t>& buffer, void* out_data) override {
+        Payload& m = *static_cast<Payload*>(out_data);
         rapidjson::Reader reader;
         rapidjson::MemoryStream ss((const char*)buffer.data(), buffer.size());
         PayloadHandler handler(&m, variant_);

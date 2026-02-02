@@ -91,9 +91,9 @@ int main(int argc, char** argv) {
     
     // 5. Warmup
     for(int i=0; i<100; i++) {
-        auto b = bench->encode(payload);
+        auto b = bench->encode(&payload);
         pf::Payload d;
-        bench->decode(b, d);
+        bench->decode(b, &d);
     }
 
     // 6. Measurement Loop
@@ -107,14 +107,14 @@ int main(int argc, char** argv) {
     for(size_t i=0; i<iterations; i++) {
         // Measure Encode
         auto t1 = high_resolution_clock::now();
-        encoded_buffer = bench->encode(payload);
+        encoded_buffer = bench->encode(&payload);
         auto t2 = high_resolution_clock::now();
         total_encode_us += duration_cast<nanoseconds>(t2 - t1).count() / 1000.0;
         
         // Measure Decode
         pf::Payload decoded_out;
         auto t3 = high_resolution_clock::now();
-        bench->decode(encoded_buffer, decoded_out);
+        bench->decode(encoded_buffer, &decoded_out);
         auto t4 = high_resolution_clock::now();
         total_decode_us += duration_cast<nanoseconds>(t4 - t3).count() / 1000.0;
     }
